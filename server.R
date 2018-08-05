@@ -3,28 +3,28 @@ library(ggplot2)
 
 function(input, output) {
   
-  dataset <- reactive({
-    diamonds[sample(nrow(diamonds), input$sampleSize),]
+  full_dataset <- read_xlsx("data/church_stats.XLSX")
+  
+  #minimize dataset
+  cols <- c("YEAR", "STATEAB", "GRPCODE", "GRPNAME", "ADHERENT")
+  dataset <- full_dataset[cols]
+  
+  #Group Data by Group Name
+  grouped_data <- group_by(dataset, GRPNAME, YEAR)
+  summary_by_grpname <- summarize(grouped_data, TOTAL = sum(ADHERENT))
+  
+  output$denomination_selector <- renderUI({
+    selectInput("grpname", "Choose Denomination:", unique(dataset$GRPNAME))
   })
   
-  output$plot <- renderPlot({
+  #Create plot based off of input
+  output$church_stats <- reactivePlot(function() { 
+  
+      denom_data <- filter(summary_by_grpname, GRPNAME == input$grpname)
     
-    p <- ggplot(dataset(), aes_string(x=input$x, y=input$y)) + geom_point()
-    
-    if (input$color != 'None')
-      p <- p + aes_string(color=input$color)
-    
-    facets <- paste(input$facet_row, '~', input$facet_col)
-    if (facets != '. ~ .')
-      p <- p + facet_grid(facets)
-    
-    if (input$jitter)
-      p <- p + geom_jitter()
-    if (input$smooth)
-      p <- p + geom_smooth()
-    
-    print(p)
-    
-  }, height=700)
+      p <- ggplot(data=denom_data, aes(x=YEAR, y=TOTAL)) + geom_bar(stat="identity", fill="steelblue")
+      
+      print(p)
+  })
   
 }
