@@ -17,14 +17,15 @@ function(input, output) {
     selectInput("grpname", "Choose Denomination:", unique(dataset$GRPNAME))
   })
   
-  #Create plot based off of input
-  output$church_stats <- reactivePlot(function() { 
+  denom_data <- reactive({
+    filter(summary_by_grpname, GRPNAME == input$grpname)
+  })
   
-      denom_data <- filter(summary_by_grpname, GRPNAME == input$grpname)
+  #Create plot based off of input
+  output$church_stats <- renderPlot({ 
     
-      p <- ggplot(data=denom_data, aes(x=YEAR, y=TOTAL)) + geom_bar(stat="identity", fill="steelblue")
+      ggplot(denom_data(), aes(x=YEAR, y=TOTAL)) + geom_bar(stat="identity", fill="steelblue")
       
-      print(p)
   })
   
 }
